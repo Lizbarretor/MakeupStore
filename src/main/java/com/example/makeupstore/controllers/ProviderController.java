@@ -1,58 +1,52 @@
 package com.example.makeupstore.controllers;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 
 import com.example.makeupstore.entities.ProviderEntity;
 import com.example.makeupstore.services.ProviderService;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
 @RestController
-@RequestMapping("/api/v2/Providers")
+@RequestMapping("/api/v2/providers")
 public class ProviderController {
 
-    private final ProviderService providerService;
-
     @Autowired
-    public ProviderController(ProviderService providerService) {
-        this.providerService = providerService;
-    }
+    private ProviderService providerService;
 
-    //method to get ALL products
+    // Method to get ALL providers
     @GetMapping
-    public List<ProviderEntity> getProviders(){
+    public ResponseEntity<Map<String, Object>> getAllProviders() {
         return providerService.getAllProviders();
     }
 
-    //Method to get one product by ID
+    // Method to get one provider by ID
     @GetMapping("/{id}")
-    public Optional<ProviderEntity> getProviders(@PathVariable UUID id){
+    public ResponseEntity<?> getProvider(@PathVariable UUID id) {
         return providerService.getProviderById(id);
     }
 
-    //Method to create one product
+    // Method to create one provider
     @PostMapping
-    public ProviderEntity createProvider(@RequestBody ProviderEntity provider){
-        return (ProviderEntity) providerService.createProvider(provider);
+    public ResponseEntity<?> createProvider(@RequestBody ProviderEntity provider) {
+        return providerService.createProvider(provider);
     }
 
-
-    //Method to update one product
+    // Method to update one provider
     @PutMapping("/{id}")
-    public Optional<ProviderEntity> updateProvider(@PathVariable UUID id, @RequestBody ProviderEntity provider) {
+    public ResponseEntity<Map<String, Object>> updateProvider(
+            @PathVariable UUID id, @RequestBody ProviderEntity provider) {
         return providerService.updateProvider(id, provider);
     }
 
-    //Method to delete one product
+    // Method to delete one provider
     @DeleteMapping("/{id}")
-    public Optional<ProviderEntity> deleteProvider(@PathVariable UUID id) {
+    public ResponseEntity<Map<String, Object>> deleteProvider(@PathVariable UUID id) {
         return providerService.deleteProvider(id);
     }
-
 }
+
 

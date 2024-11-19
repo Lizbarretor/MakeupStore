@@ -1,7 +1,5 @@
 package com.example.makeupstore.controllers;
-
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 
 import com.example.makeupstore.entities.ClientEntity;
@@ -9,49 +7,47 @@ import com.example.makeupstore.services.ClientService;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/api/v2/clients")
 public class ClientsController {
 
-    private final ClientService clientService;
-
     @Autowired
-    public ClientsController(ClientService clientService) {
-        this.clientService = clientService;
-    }
+    private ClientService clientService;
 
-    //method to get ALL products
+    //method to get ALL clients
     @GetMapping
-    public List<ClientEntity> getClients(){
+    public ResponseEntity<Map<String, Object>> getAllProducts() {
         return clientService.getAllClients();
     }
 
-    //Method to get one product by ID
+    //Method to get one client by ID
     @GetMapping("/{id}")
-    public Optional<ClientEntity> getClients(@PathVariable UUID id){
+    public ResponseEntity<?> getClient(@PathVariable UUID id) {
+
         return clientService.getClientById(id);
     }
 
-    //Method to create one product
+    //Method to create one client
     @PostMapping
-    public ClientEntity createClient(@RequestBody ClientEntity client){
-        return (ClientEntity) clientService.createClient(client);
+    public ResponseEntity<?> createClient(@RequestBody ClientEntity client) {
+        return clientService.createClient(client);
     }
 
 
-    //Method to update one product
+    //Method to update one client
     @PutMapping("/{id}")
-    public Optional<ClientEntity> updateClient(@PathVariable UUID id, @RequestBody ClientEntity client) {
+    public ResponseEntity<Map<String, Object>> updateClient(
+            @PathVariable UUID id, @RequestBody ClientEntity client) {
         return clientService.updateClient(id, client);
     }
 
+
     //Method to delete one product
     @DeleteMapping("/{id}")
-    public Optional<ClientEntity> deleteClient(@PathVariable UUID id) {
+    public ResponseEntity<Map<String, Object>> deleteClient(@PathVariable UUID id) {
         return clientService.deleteClient(id);
     }
-
 }

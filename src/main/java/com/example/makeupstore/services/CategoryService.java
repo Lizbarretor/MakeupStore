@@ -1,55 +1,80 @@
 package com.example.makeupstore.services;
-
 import com.example.makeupstore.entities.CategoryEntity;
+import com.example.makeupstore.repositories.CategoryRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class CategoryService {
-    private final List<CategoryEntity> categories;
 
-    public CategoryService() {
-        categories = new ArrayList<>();
-        categories.add(new CategoryEntity(UUID.randomUUID(), "Ojos", "Pestañas definidas con volumen para crear el efecto de mirada impactante"));
-        categories.add(new CategoryEntity(UUID.randomUUID(),  "Rostro","Produtos ideales para todo tipo de piel" ));
-        categories.add(new CategoryEntity(UUID.randomUUID(),  "Labios","Volumen intenso con beneficios de un balsamo"));
+    @Autowired
+    private CategoryRepository categoryRepository;
 
+    public ResponseEntity<Map<String, Object>> getAllCategories() {
+        Map<String, Object> response = new HashMap<>();
+        List<CategoryEntity> categories = categoryRepository.findAll();
+        response.put("Categories", categories);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    public List<CategoryEntity> createCategory(CategoryEntity newCategory) {
-        newCategory.setId(UUID.randomUUID());
-        categories.add(newCategory);
-        return (List<CategoryEntity>) newCategory;
-    }
-    public List<CategoryEntity> getAllCategories() {
-        return categories;
-    }
-
-    public Optional<CategoryEntity> getCategoryById(UUID id) {
-        return categories.stream().filter(category -> category.getId().equals(id)).findFirst();
-    }
-
-    public Optional<CategoryEntity> updateCategory(UUID id, CategoryEntity updatedCategory) {
-        Optional<CategoryEntity> existingCategory= getCategoryById(id);
-
-        if (existingCategory.isPresent()) {
-            CategoryEntity category = existingCategory.get();
-            category.setCategoryName(updatedCategory.getCategoryName());
-            category.setDescription(updatedCategory.getDescription());
-            return Optional.of(category);
+    public ResponseEntity<Map<String, Object>> getCategoryById(UUID id) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<CategoryEntity> categoryFound = categoryRepository.findById(id);
+        if (categoryFound.isPresent()) {
+            response.put("Category", categoryFound.get());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("Error", "Category not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        return Optional.empty();
     }
 
-    public Optional<CategoryEntity> deleteCategory(UUID id) {
-        Optional<CategoryEntity> categoryToDelete = getCategoryById(id);
-        categoryToDelete.ifPresent(categories::remove);
-        return categoryToDelete;
+    public ResponseEntity<Map<String, Object>> createCategory(CategoryEntity category) {
+        Map<String, Object> response = new HashMap<>();
+        category.setId(UUID.randomUUID());
+        if (categoryRepository.existsById(category.getId())) {
+            response.put("Status", "Category already exists");
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        } else {
+            CategoryEntity newCategory = categoryRepository.save(category);
+            response.put("Status", "Category inserted successfully");
+            response.put("Category", newCategory);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
     }
 
+    public ResponseEntity<Map<String, Object>> updateCategory(UUID id, CategoryEntity category) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<CategoryEntity> categoryFound = categoryRepository.findById(id);
+        if (categoryFound.isPresent()) {
+            CategoryEntity existingCategory = categoryFound.get();
+            existingCategory.setCategoryName(category.getCategoryName());
+            existingCategory.setDescription(category.getDescription());
+            categoryRepository.save(existingCategory);
+            response.put("Status", "Category updated successfully");
+            response.put("UpdatedCategory", existingCategory);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("Status", "Category not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public ResponseEntity<Map<String, Object>> deleteCategory(UUID id) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<CategoryEntity> categoryFound = categoryRepository.findById(id);
+        if (categoryFound.isPresent()) {
+            categoryRepository.deleteById(id);
+            response.put("Status", "Category deleted successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("Status", "Category not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
 }
 

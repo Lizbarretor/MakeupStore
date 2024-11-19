@@ -1,56 +1,85 @@
 package com.example.makeupstore.services;
 
+
 import com.example.makeupstore.entities.ClientEntity;
+import com.example.makeupstore.repositories.ClientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ClientService {
-    private final List<ClientEntity> clients;
 
-    public ClientService() {
-        clients = new ArrayList<>();
-        clients.add(new ClientEntity(UUID.randomUUID(), "Luisa Vargas", "luis@gmail.co", 320345654));
-        clients.add(new ClientEntity(UUID.randomUUID(), "Carlos Rodríguez", "carlos.rodriguez@mail.com", 310456789));
-        clients.add(new ClientEntity(UUID.randomUUID(), "Ana Martínez", "ana.martinez@outlook.com", 311234567));
+    @Autowired
+    private ClientRepository clientRepository;
 
+    public ResponseEntity<Map<String,Object>> getAllClients() {
+        Map<String,Object> response = new HashMap<>();
+        List<ClientEntity> clients = clientRepository.findAll();
+        response.put("Clients", clients);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    public List<ClientEntity> createClient(ClientEntity newClient) {
-        newClient.setId(UUID.randomUUID());
-        clients.add(newClient);
-        return (List<ClientEntity>) newClient;
-    }
-    public List<ClientEntity> getAllClients() {
-        return clients;
-    }
-
-    public Optional<ClientEntity> getClientById(UUID id) {
-        return clients.stream().filter(client -> client.getId().equals(id)).findFirst();
-    }
-
-    public Optional<ClientEntity> updateClient(UUID id, ClientEntity updatedClient) {
-        Optional<ClientEntity> existingClient= getClientById(id);
-
-        if (existingClient.isPresent()) {
-            ClientEntity client = existingClient.get();
-            client.setClientName(updatedClient.getClientName());
-            client.setEmail(updatedClient.getEmail());
-            client.setTelephone(updatedClient.getTelephone());
-            return Optional.of(client);
+    public ResponseEntity<Map<String, Object>> getClientById(UUID id) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<ClientEntity> clientFound = clientRepository.findById(id);
+        if (clientFound.isPresent()) {
+            response.put("Client", clientFound.get());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("Error", "Client not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        return Optional.empty();
     }
 
-    public Optional<ClientEntity> deleteClient(UUID id) {
-        Optional<ClientEntity> clientToDelete = getClientById(id);
-        clientToDelete.ifPresent(clients::remove);
-        return clientToDelete;
+    public ResponseEntity<Map<String, Object>> createClient(ClientEntity client) {
+        Map<String, Object> response = new HashMap<>();
+        client.setId(UUID.randomUUID());
+        if (clientRepository.existsById(client.getId())) {
+            response.put("Status", "Item already exists");
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        } else {
+            ClientEntity newClient = clientRepository.save(client);
+            response.put("Status", "Item inserted successfully");
+            response.put("Country", newClient);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
     }
+
+    public ResponseEntity<Map<String, Object>> updateClient(UUID id, ClientEntity client) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<ClientEntity> clientFound = clientRepository.findById(id);
+        if (clientFound.isPresent()) {
+            ClientEntity existingClient= clientFound.get();
+            existingClient.setClientName(client.getClientName());
+            existingClient.setEmail(client.getEmail());
+            existingClient.setTelephone(client.getTelephone());
+            clientRepository.save(existingClient);
+            response.put("Status", "Client updated successfully");
+            response.put("UpdatedClient", existingClient);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("Status", "Client not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public ResponseEntity<Map<String, Object>> deleteClient(UUID id) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<ClientEntity> clientFound = clientRepository.findById(id);
+        if (clientFound.isPresent()) {
+            clientRepository.deleteById(id);
+            response.put("Status", "Client deleted successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }else{
+            response.put("Status", "Client not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+
+
 }
-
 

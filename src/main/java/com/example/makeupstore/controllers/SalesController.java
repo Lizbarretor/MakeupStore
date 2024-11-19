@@ -1,58 +1,51 @@
 package com.example.makeupstore.controllers;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 
 import com.example.makeupstore.entities.SaleEntity;
 import com.example.makeupstore.services.SaleService;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/api/v2/sales")
 public class SalesController {
 
-    private final SaleService saleService;
-
     @Autowired
-    public SalesController(SaleService saleService) {
-        this.saleService = saleService;
-    }
+    private SaleService saleService;
 
-    //method to get ALL products
+    // Method to get ALL sales
     @GetMapping
-    public List<SaleEntity> getSales(){
+    public ResponseEntity<Map<String, Object>> getAllSales() {
         return saleService.getAllSales();
     }
 
-    //Method to get one product by ID
+    // Method to get one sale by ID
     @GetMapping("/{id}")
-    public Optional<SaleEntity> getSales(@PathVariable UUID id){
+    public ResponseEntity<?> getSale(@PathVariable UUID id) {
         return saleService.getSaleById(id);
     }
 
-    //Method to create one product
+    // Method to create one sale
     @PostMapping
-    public SaleEntity createSale(@RequestBody SaleEntity sale){
-        return (SaleEntity) saleService.createSale(sale);
+    public ResponseEntity<?> createSale(@RequestBody SaleEntity sale) {
+        return saleService.createSale(sale);
     }
 
-
-    //Method to update one product
+    // Method to update one sale
     @PutMapping("/{id}")
-    public Optional<SaleEntity> updateSale(@PathVariable UUID id, @RequestBody SaleEntity sale) {
+    public ResponseEntity<Map<String, Object>> updateSale(
+            @PathVariable UUID id, @RequestBody SaleEntity sale) {
         return saleService.updateSale(id, sale);
     }
 
-    //Method to delete one product
+    // Method to delete one sale
     @DeleteMapping("/{id}")
-    public Optional<SaleEntity> deleteSale(@PathVariable UUID id) {
+    public ResponseEntity<Map<String, Object>> deleteSale(@PathVariable UUID id) {
         return saleService.deleteSale(id);
     }
-
 }
 

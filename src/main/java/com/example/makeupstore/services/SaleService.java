@@ -1,55 +1,82 @@
 package com.example.makeupstore.services;
 
-import com.example.makeupstore.entities.ClientEntity;
 import com.example.makeupstore.entities.SaleEntity;
+import com.example.makeupstore.repositories.SalesRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class SaleService {
-    private final List<SaleEntity> sales;
 
-    public SaleService() {
-        sales = new ArrayList<>();
-        sales.add(new SaleEntity(UUID.randomUUID(),1,"Efectivo", 15.00));
-        sales.add(new SaleEntity(UUID.randomUUID(),2,"Tarjeta", 20.00));
-        sales.add(new SaleEntity(UUID.randomUUID(),3,"Tranferencia", 12.00));
+    @Autowired
+    private SalesRepository salesRepository;
 
-    }
-    public List<SaleEntity> createSale(SaleEntity newSale) {
-        newSale.setId(UUID.randomUUID());
-        sales.add(newSale);
-        return (List<SaleEntity>) newSale;
-    }
-    public List<SaleEntity> getAllSales() {
-        return sales;
+    public ResponseEntity<Map<String, Object>> getAllSales() {
+        Map<String, Object> response = new HashMap<>();
+        List<SaleEntity> sales = salesRepository.findAll();
+        response.put("Sales", sales);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    public Optional<SaleEntity> getSaleById(UUID id) {
-        return sales.stream().filter(sale -> sale.getId().equals(id)).findFirst();
-    }
-
-    public Optional<SaleEntity> updateSale(UUID id, SaleEntity updatedSale) {
-        Optional<SaleEntity> existingSale= getSaleById(id);
-
-        if (existingSale.isPresent()) {
-            SaleEntity sale = existingSale.get();
-            sale.setIdClient(updatedSale.getIdClient());
-            sale.setPayment(updatedSale.getPayment());
-            sale.setTotal(updatedSale.getTotal());
-            return Optional.of(sale);
+    public ResponseEntity<Map<String, Object>> getSaleById(UUID id) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<SaleEntity> saleFound = salesRepository.findById(id);
+        if (saleFound.isPresent()) {
+            response.put("Sale", saleFound.get());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("Error", "Sale not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-        return Optional.empty();
     }
 
-    public Optional<SaleEntity> deleteSale(UUID id) {
-        Optional<SaleEntity> saleToDelete = getSaleById(id);
-        saleToDelete.ifPresent(sales::remove);
-        return saleToDelete;
+    public ResponseEntity<Map<String, Object>> createSale(SaleEntity sale) {
+        Map<String, Object> response = new HashMap<>();
+        sale.setId(UUID.randomUUID());
+        if (salesRepository.existsById(sale.getId())) {
+            response.put("Status", "Sale already exists");
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        } else {
+            SaleEntity newSale = salesRepository.save(sale);
+            response.put("Status", "Sale inserted successfully");
+            response.put("Sale", newSale);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
     }
 
+    public ResponseEntity<Map<String, Object>> updateSale(UUID id, SaleEntity sale) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<SaleEntity> saleFound = salesRepository.findById(id);
+        if (saleFound.isPresent()) {
+            SaleEntity existingSale = saleFound.get();
+            existingSale.setSaleDate(sale.getSaleDate());
+            existingSale.setCustomerName(sale.getCustomerName());
+            existingSale.setItemsSold(sale.getItemsSold());
+            existingSale.setTotalAmount(sale.getTotalAmount());
+            salesRepository.save(existingSale);
+            response.put("Status", "Sale updated successfully");
+            response.put("UpdatedSale", existingSale);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("Status", "Sale not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public ResponseEntity<Map<String, Object>> deleteSale(UUID id) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<SaleEntity> saleFound = salesRepository.findById(id);
+        if (saleFound.isPresent()) {
+            salesRepository.deleteById(id);
+            response.put("Status", "Sale deleted successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("Status", "Sale not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
 }
