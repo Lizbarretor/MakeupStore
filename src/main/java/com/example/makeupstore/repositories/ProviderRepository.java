@@ -1,4 +1,4 @@
 package com.example.makeupstore.repositories;
 
-public class ProviderRepository {
+public interface ProviderRepository {
 }
